@@ -28,7 +28,7 @@ class Dumper {
         "/^ *switch[ \(]+.*\: *$/"    => 'endswitch',
         "/^ *case *.* *\: *$/"        => 'break'
     );
-	
+
     protected $specialAttribtues = array('selected', 'checked', 'required', 'disabled');
 
     protected $nextIsIf = array();
@@ -64,7 +64,7 @@ class Dumper {
      */
     protected function dumpNode(Node $node, $level = 0) {
 //        $dumper = 'dump' . basename(str_replace('\\', '/', get_class($node)), 'Node');
-		$dumper = 'dump' .$node->type;
+        $dumper = 'dump' .$node->type;
         return $this->$dumper($node, $level);
     }
 
@@ -122,10 +122,10 @@ class Dumper {
         $html = str_repeat('  ', $level);
 
         if ( in_array($node->name, $this->selfClosing) ) {
-			$html .= sprintf('<%s%s />', $node->name, $this->dumpAttributes($node->attributes));
-			return $html;
+            $html .= sprintf('<%s%s />', $node->name, $this->dumpAttributes($node->attributes));
+            return $html;
         } else {
-			$html .= sprintf('<%s%s>', $node->name, $this->dumpAttributes($node->attributes));
+            $html .= sprintf('<%s%s>', $node->name, $this->dumpAttributes($node->attributes));
 
             if ( $node->code ) {
                 if ( count($node->children) ) {
@@ -220,7 +220,7 @@ class Dumper {
     protected function dumpCode(Node $node, $level = 0) {
         $html = str_repeat('  ', $level);
 
-		$map = array('='=>'Jade\Dumper::_text', '!='=>'Jade\Dumper::_html');
+        $map = array('='=>'Jade\Dumper::_text', '!='=>'Jade\Dumper::_html');
 
 
         if ( $node->block ) {
@@ -323,32 +323,35 @@ class Dumper {
     }
 
     protected function replaceHolders($string, $type = 'none', $key = '') {
-		//fixes replacement bugs and changes syntax as like jade original
-		if ($type == 'attribute') {
-			if (preg_match('/^[a-zA-Z0-9_][a-zA-Z0-9_>]*$/', $string)) {
-				if (in_array($key, $this->specialAttribtues)) {
-					return sprintf('<?php if ($%s) echo "%s=\'".Jade\Dumper::_text($%s)."\'"; ?>', $string, $key, $string);
-				}
-				return sprintf('<?php echo Jade\Dumper::_text($%s); ?>', $string);
-			}
-			$string = trim($string, '\'\"');
-			if ($key === 'class') {
-				$string = str_replace('.', '', $string);
-			}
-			if ($key === 'id' && strpos($string, '#{') === false) {
-				$string = str_replace('#', '', $string);
-			}
-			// If it doesn't look like php we can run it through dump_text
-			if ( strpos($string, '(') === false && strpos($string, ')') === false && strpos($string, '::') === false && strpos($string, '->') === false){
-				$string = self::_text($string);
-			}
-		}
+        //fixes replacement bugs and changes syntax as like jade original
+        if ($type == 'attribute') {
+            if (preg_match('/^[a-zA-Z0-9_][a-zA-Z0-9_>]*$/', $string)) {
+                if (in_array($key, $this->specialAttribtues)) {
+                    return sprintf('<?php if ($%s) echo "%s=\'".Jade\Dumper::_text($%s)."\'"; ?>', $string, $key, $string);
+                }
+                return sprintf('<?php echo Jade\Dumper::_text($%s); ?>', $string);
+            }
+            $string = trim($string, '\'\"');
+            if ($key === 'class') {
+                $string = str_replace('.', '', $string);
+            }
+            if ($key === 'id' && strpos($string, '#{') === false) {
+                $string = str_replace('#', '', $string);
+            }
+            // If it doesn't look like php we can run it through dump_text
+            if ( strpos($string, '(') === false && strpos($string, ')') === false && strpos($string, '::') === false && strpos($string, '->') === false){
+                $string = self::_text($string);
+            }
+        }
         $string = preg_replace_callback('/([!#]){([^}]+)}/', function($matches) {
-			$map = array('#'=>'Jade\Dumper::_text', '!'=>'Jade\Dumper::_html');
-			return sprintf('<?php echo %s(%s); ?>', $map[$matches[1]], $matches[2]);
+            if ($matches[1] == "#") {
+                return sprintf('<?php echo e(%s); ?>', $matches[2]);
+            } else { // == "!"
+                return sprintf('<?php echo %s; ?>', $matches[2]);
+            }
         }, $string);
-		
-		return $string;
+
+        return $string;
     }
 }
 ?>
